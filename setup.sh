@@ -50,7 +50,7 @@ if [ "$ID" = "rhel" -o "$ID" = "centos" ] && [ $VER_MAJOR -lt 10 ]; then
         python3-lasso
 else
     dnf -y install \
-        java-17-openjdk-headless
+        java-21-openjdk-headless
 fi
 
 #################
