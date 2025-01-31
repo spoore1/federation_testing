@@ -330,7 +330,7 @@ class SamlIdp(object):
 class KeycloakIdp(SamlIdp):
     def __init__(self, url, realm, soap_binding=None):
         if soap_binding is None:
-            soap_binding = f"{url}/auth/realms/{realm}/protocol/saml"
+            soap_binding = f"{url}/realms/{realm}/protocol/saml"
         print(soap_binding)
         super(KeycloakIdp, self).__init__(url, 'keycloak', realm, soap_binding)
 
