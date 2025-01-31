@@ -2,13 +2,16 @@
 
 set -x
 
+AUTHDIR=${1:-""}
+echo "Running tests with AUTHDIR=${AUTHDIR}"
+
 ################
 
 echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443 \
+    --keycloak-server-url https://$(hostname):8443${AUTHDIR} \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -65,7 +68,7 @@ $kcadm update clients/$ID -r master -s 'attributes={"saml.allow.ecp.flow":"true"
 sleep 10
 
 py.test-3 --idp-realm master \
-          --idp-url https://$(hostname):8443 \
+          --idp-url https://$(hostname):8443${AUTHDIR} \
           --sp-url https://$(hostname):60443/mellon_root \
           --username testuser --password Secret123 \
           --url https://$(hostname):60443/mellon_root/private \
