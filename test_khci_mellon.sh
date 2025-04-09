@@ -5,7 +5,25 @@
 set -x
 set -e
 
-./setup.sh /auth
+AUTHDIR="/auth"
+KHCI_SERVERURL="https://$(hostname):8443${AUTHDIR}"
+echo "Running tests with AUTHDIR=${AUTHDIR}"
+echo "Running tests with KHCI_SERVERURL=${KHCI_SERVERURL}"
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    VER_MAJOR=$(echo $VERSION_ID|cut -f1 -d.)
+    VER_MINOR=$(echo $VERSION_ID|cut -f2 -d.)
+fi
+
+if [ "$ID" = "rhel" -a $VER_MAJOR -eq 8 ]; then
+    AUTHDIR="/auth"
+    KHCI_SERVERURL="https://$(hostname):8443"
+    echo "Resetting AUTHDIR to ${AUTHDIR} for RHEL 8"
+    echo "Resetting KHCI_SERVERURL to ${KHCI_SERVERURL} for RHEL 8"
+fi
+
+./setup.sh ${AUTHDIR}
 
 function run_web_sso_test() {
     keycloak_realm=$1
@@ -13,7 +31,7 @@ function run_web_sso_test() {
     password=$3
 
     py.test-3 --idp-realm $keycloak_realm \
-              --idp-url https://$(hostname):8443 \
+              --idp-url https://$(hostname):8443${AUTHDIR} \
               --sp-url https://$(hostname):60443/mellon_root \
               --username $username \
               --password $password \
@@ -28,7 +46,7 @@ function does_realm_exist {
     keycloak_realm=$2
     keycloak_password=$3
 
-    TOKEN=$(curl -q -XPOST http://$keycloak_server:8080/auth/realms/master/protocol/openid-connect/token -d"grant_type=password&username=admin&password=$keycloak_password&client_id=admin-cli" | jq '.access_token')
+    TOKEN=$(curl -q -XPOST http://$keycloak_server:8080${AUTHDIR}/realms/master/protocol/openid-connect/token -d"grant_type=password&username=admin&password=$keycloak_password&client_id=admin-cli" | jq '.access_token')
     exists=$(curl -v -w"%{response_code}" -H"Bearer: $TOKEN" http://$keycloak_server:8080/realms/$keycloak_realm)
     if [ "$exists" == "200" ]; then
         return 0;
@@ -44,7 +62,7 @@ echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443/auth \
+    --keycloak-server-url ${KHCI_SERVERURL} \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -85,7 +103,7 @@ echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443/auth \
+    --keycloak-server-url ${KHCI_SERVERURL} \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \

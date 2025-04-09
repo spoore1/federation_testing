@@ -30,13 +30,20 @@ if [ -f /etc/os-release ]; then
     fi
 fi
 
+if [ "$ID" = "rhel" -a $VER_MAJOR -eq 8 ]; then
+    AUTHDIR="/auth"
+    echo "Resetting AUTHDIR to ${AUTHDIR} for RHEL 8"
+fi
+
 dnf -y install \
+    policycoreutils-python-utils \
     keycloak-httpd-client-install \
     mod_auth_openidc \
     python3-lxml \
     python3-requests \
     python3-pytest \
     python3-distro \
+    bind-utils \
     dnf-utils \
     openssl \
     mod_ssl \
@@ -52,6 +59,38 @@ else
     dnf -y install \
         java-21-openjdk-headless
 fi
+
+################ test environment hostname workarounds ########################
+
+set +e
+hostname -f|grep testing-farm
+if [ $? -eq 0 ]; then
+    IP=$(hostname -I|awk '{print $1}')
+    if [ -z "$IP" ]; then
+        echo "Cannot determine IP Address....skipping adding to /etc/hosts"
+    else
+        echo "Adding [$IP $(hostname)] to /etc/hosts"
+        echo "$IP $(hostname)" >> /etc/hosts
+    fi
+fi
+
+hostname -f|grep -i -- "-1mt-"
+if [ $? -eq 0 ]; then
+    echo "Must reset hostname in some test environments"
+    CURRENT_HOSTNAME=$(hostname)
+    IP=$(hostname -I|awk '{print $1}')
+    REVERSE_LOOKUP=$(dig +short -x $IP)
+    if [ ! -z "$REVERSE_LOOKUP" -a ! -z "$CURRENT_HOSTNAME" ]; then
+        echo $CURRENT_HOSTNAME|grep $REVERSE_LOOKUP
+        if [ $? -ne 0 ]; then
+            echo "Forcing hostname change to $REVERSE_LOOKUP"
+            echo "$IP $REVERSE_LOOKUP" >> /etc/hosts
+            hostnamectl set-hostname $REVERSE_LOOKUP
+        fi
+    fi
+fi
+
+set -e
 
 #################
 
@@ -120,7 +159,7 @@ distinguished_name = req_distinguished_name
 prompt             = no
 
 [ req_distinguished_name ]
-O  = IdM Federation Example 
+O  = IdM Federation Example
 OU = IdM Federation Example Test
 CN = IdM Federation Example Test CA
 EOF
@@ -331,6 +370,7 @@ cp /var/www/html/openidc_root/private/index.html \
 cp /var/www/html/openidc_root/private/index.html \
     /var/www/html/openidc_root/private/static/private_static/
 
+restorecon -R /var/www/html
 
 systemctl start httpd
 
@@ -386,5 +426,7 @@ cp /var/www/html/mellon_root/private/index.html \
     /var/www/html/mellon_root/private/static/
 cp /var/www/html/mellon_root/private/index.html \
     /var/www/html/mellon_root/private/static/private_static/
+
+restorecon -R /var/www/html
 
 systemctl start httpd
