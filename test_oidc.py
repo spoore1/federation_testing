@@ -6,6 +6,7 @@ import time
 import socket
 import shutil
 import subprocess
+import distro
 
 import oidctest
 from html.parser import HTMLParser
@@ -154,6 +155,10 @@ def test_oauth(idp_realm, oidc_client_info,
                                       oidc_client_id, oidc_client_secret,
                                       is_my_page)
 
+@pytest.mark.skipif(
+    (int(distro.major_version()), int(distro.minor_version())) < (8, 6),
+    reason="requires mod_auth_mellon in RHEL9.6 and newer"
+)
 def test_bad_logout_uri(login_user, resource_url,
                         oidc_test_instance,
                         bad_logout_redirect_urls):

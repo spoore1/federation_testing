@@ -20,6 +20,13 @@ if [ "$ID" = "rhel" -a $VER_MAJOR -eq 8 ]; then
     echo "Resetting KHCI_SERVERURL to ${KHCI_SERVERURL} for RHEL 8"
 fi
 
+if [ "$ID" = "rhel" -a $VER_MAJOR -eq 9 -a $VER_MINOR -le 5 ]; then
+    AUTHDIR="/auth"
+    KHCI_SERVERURL="https://$(hostname):8443"
+    echo "Resetting AUTHDIR to ${AUTHDIR} for RHEL 9.5 and earlier"
+    echo "Resetting KHCI_SERVERURL to ${KHCI_SERVERURL} for RHEL 9.5 and earlier"
+fi
+
 ################
 
 echo Secret123 | \
