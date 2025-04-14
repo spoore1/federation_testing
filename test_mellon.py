@@ -6,6 +6,7 @@ import time
 import os
 import tempfile
 import subprocess
+import distro
 
 import samltest
 from html.parser import HTMLParser
@@ -314,6 +315,10 @@ def test_mellon_diagnostics(login_user, resource_url, saml_test_instance):
                       "size {diag_size} is greater than 0")
 
 
+@pytest.mark.skipif(
+    (int(distro.major_version()), int(distro.minor_version())) < (9, 6),
+    reason="requires mod_auth_mellon in RHEL9.6 and newer"
+)
 def test_mellon_create_metadata():
     """Test mellon create metadata script creates xml file
 

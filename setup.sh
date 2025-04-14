@@ -33,6 +33,13 @@ fi
 if [ "$ID" = "rhel" -a $VER_MAJOR -eq 8 ]; then
     AUTHDIR="/auth"
     echo "Resetting AUTHDIR to ${AUTHDIR} for RHEL 8"
+    echo "Also enabling mod_auth_openidc module for RHEL8"
+    dnf -y module enable mod_auth_openidc
+fi
+
+if [ "$ID" = "rhel" -a $VER_MAJOR -eq 9 -a $VER_MINOR -le 5 ]; then
+    AUTHDIR="/auth"
+    echo "Resetting AUTHDIR to ${AUTHDIR} for RHEL 9.5 and earlier"
 fi
 
 dnf -y install \
