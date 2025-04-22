@@ -79,8 +79,8 @@ if [ $? -eq 0 ]; then
     if [ -z "$IP" ]; then
         echo "Cannot determine IP Address....skipping adding to /etc/hosts"
     else
-        echo "Adding [$IP $(hostname)] to /etc/hosts"
-        echo "$IP $(hostname)" >> /etc/hosts
+        echo "Adding [$IP $(hostname -f)] to /etc/hosts"
+        echo "$IP $(hostname -f)" >> /etc/hosts
     fi
 fi
 
